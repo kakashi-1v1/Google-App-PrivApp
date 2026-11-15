@@ -13,7 +13,7 @@ ui_print " "
 
 W="$TMPDIR/kashi_gapp"
 rm -rf "$W"; mkdir -p "$W/art/dalvik-cache"
-unzip -qo "$ZIPFILE" module.prop service.sh uninstall.sh -d "$MODPATH" >&2 || abort "! Unzip failed"
+unzip -qo "$ZIPFILE" module.prop system.prop service.sh uninstall.sh -d "$MODPATH" >&2 || abort "! Unzip failed"
 unzip -qo "$ZIPFILE" kashi_overlay.sh kashi_apkeditor.jar KashiGoogleAssistOverlay.apk com.google.android.contextual_search.xml -d "$W" >&2 || abort "! Unzip failed"
 . "$W/kashi_overlay.sh"
 

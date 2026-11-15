@@ -1,0 +1,2 @@
+# "Hey Google" (Assistant voice match) is only offered on OPA-eligible devices
+ro.opa.eligible_device=true
