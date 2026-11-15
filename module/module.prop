@@ -1,0 +1,7 @@
+id=kashi_google_privapp
+name=Google App PrivApp
+version=v1.0
+versionCode=1
+author=🅺🅰🆂🅷🅸
+description=Downloads the latest Google app while flashing and installs it as a privileged system app, set as the default assistant with Circle to Search (contextual search) and content suggestions. t.me/kashis_cringey_stuffs
+updateJson=https://raw.githubusercontent.com/kakashi-1v1/Google-App-PrivApp/main/update.json

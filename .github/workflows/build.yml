@@ -1,0 +1,109 @@
+name: Build
+
+# - every 6 h: newest stable Google app on APKMirror -> verified (Google signature) -> pre-release gapp-<version>
+#   with Velvet.apk + privapp-permissions.xml, latest.json updated (the online module downloads from there)
+# - module release v<module version> (latest): online zip + offline zip (bundles the current Google app);
+#   rebuilt when the module changes or a new Google app is published
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: [main]
+    paths: ['module/**', 'scripts/**']
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Re-publish the Google app even if this version is already released'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Android build tools
+        run: echo "$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n1)" >> "$GITHUB_PATH"
+
+      - name: Newest Google app on APKMirror
+        id: ver
+        run: |
+          ver=$(bash scripts/fetch_apkmirror.sh --version)
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+          if gh release view "gapp-$ver" >/dev/null 2>&1 && [ "${{ inputs.force }}" != "true" ]; then
+            echo "gapp-$ver already published"
+          else
+            echo "new=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish Google app
+        if: steps.ver.outputs.new == '1'
+        run: |
+          ver=${{ steps.ver.outputs.ver }}; tag=gapp-$ver
+          bash scripts/fetch_apkmirror.sh Velvet.apk
+          read -r vn vc < <(bash scripts/verify_google.sh Velvet.apk)
+          bash scripts/make_privapp.sh Velvet.apk privapp-permissions.xml
+          sha=$(sha256sum Velvet.apk | cut -d' ' -f1); psha=$(sha256sum privapp-permissions.xml | cut -d' ' -f1)
+          size=$(stat -c %s Velvet.apk)
+          gh release delete "$tag" -y --cleanup-tag >/dev/null 2>&1 || true
+          gh release create "$tag" Velvet.apk privapp-permissions.xml --prerelease --latest=false \
+            --title "Google app $vn" \
+            --notes "Google app $vn ($vc), arm64, from APKMirror. apksigner verified, signed by Google. SHA-256: \`$sha\`. Used by the online module while flashing."
+          base="https://github.com/${{ github.repository }}/releases/download/$tag"
+          {
+            echo '{'
+            echo "  \"version\": \"$ver\","
+            echo "  \"versionName\": \"$vn\","
+            echo "  \"versionCode\": $vc,"
+            echo "  \"apk\": \"$base/Velvet.apk\","
+            echo "  \"apkSha256\": \"$sha\","
+            echo "  \"apkSize\": $size,"
+            echo "  \"privapp\": \"$base/privapp-permissions.xml\","
+            echo "  \"privappSha256\": \"$psha\""
+            echo '}'
+          } > latest.json
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git add latest.json; git commit -m "Google app $vn" && git push || true
+          echo "MODULES=1" >> "$GITHUB_ENV"
+
+      - name: Module changed?
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: echo "MODULES=1" >> "$GITHUB_ENV"
+
+      - name: Build module zips
+        if: env.MODULES == '1'
+        run: |
+          [ -f latest.json ] || { echo "no Google app published yet"; exit 1; }
+          j() { sed -n "s/^ *\"$1\": *\"\{0,1\}\([^\",]*\)\"\{0,1\},\{0,1\} *$/\1/p" latest.json | head -n1; }
+          want=$(j apkSha256)
+          if [ ! -f Velvet.apk ] || [ "$(sha256sum Velvet.apk | cut -d' ' -f1)" != "$want" ]; then curl -fsSL -o Velvet.apk "$(j apk)"; fi
+          [ "$(sha256sum Velvet.apk | cut -d' ' -f1)" = "$want" ] || { echo "checksum mismatch"; exit 1; }
+          read -r vn vc < <(bash scripts/verify_google.sh Velvet.apk)
+          mv=$(sed -n 's/^version=//p' module/module.prop); mvc=$(sed -n 's/^versionCode=//p' module/module.prop)
+          gv=$(j version)
+          on="$PWD/GoogleApp-PrivApp-$mv-online.zip"; off="$PWD/GoogleApp-PrivApp-$mv-offline-gapp$gv.zip"
+          bash scripts/build_module.sh "$on"
+          bash scripts/build_module.sh "$off" Velvet.apk "$vn" "$vc"
+          if gh release view "$mv" >/dev/null 2>&1; then
+            for a in $(gh release view "$mv" --json assets -q '.assets[].name'); do gh release delete-asset "$mv" "$a" -y; done
+            gh release upload "$mv" "$on" "$off" --clobber
+            gh release edit "$mv" --latest
+          else
+            gh release create "$mv" "$on" "$off" --latest --title "Google App PrivApp $mv" --notes-file RELEASE_NOTES.md
+          fi
+          url="https://github.com/${{ github.repository }}/releases/download/$mv/$(basename "$on")"
+          printf '{\n  "version": "%s",\n  "versionCode": %s,\n  "zipUrl": "%s",\n  "changelog": "https://raw.githubusercontent.com/${{ github.repository }}/main/CHANGELOG.md"\n}\n' "$mv" "$mvc" "$url" > update.json
+          git config user.name github-actions; git config user.email github-actions@users.noreply.github.com
+          git pull -q --rebase || true
+          git add update.json; git commit -m "Module $mv" && git push || true
