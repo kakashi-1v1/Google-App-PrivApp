@@ -14,7 +14,7 @@ ui_print " "
 W="$TMPDIR/kashi_gapp"
 rm -rf "$W"; mkdir -p "$W/art/dalvik-cache"
 unzip -qo "$ZIPFILE" module.prop service.sh uninstall.sh -d "$MODPATH" >&2 || abort "! Unzip failed"
-unzip -qo "$ZIPFILE" kashi_overlay.sh kashi_apkeditor.jar KashiGoogleAssistOverlay.apk -d "$W" >&2 || abort "! Unzip failed"
+unzip -qo "$ZIPFILE" kashi_overlay.sh kashi_apkeditor.jar KashiGoogleAssistOverlay.apk com.google.android.contextual_search.xml -d "$W" >&2 || abort "! Unzip failed"
 . "$W/kashi_overlay.sh"
 
 # ---------------------------------------------------------------- Google app: bundled (offline zip) or downloaded
@@ -206,6 +206,11 @@ if [ "$OV_DONE" = 0 ]; then
     mkdir -p "$_d"; cp -f "$W/KashiGoogleAssistOverlay.apk" "$_d/"
     KASHI_CLEAN="$KASHI_CLEAN KashiGoogleAssistOverlay"
 fi
+
+# Circle to Search feature flags (same file name as the ROM's, so it replaces it when present)
+ui_print "- Adding Circle to Search features"
+mkdir -p "$MODPATH/system/product/etc/permissions"
+cp -f "$W/com.google.android.contextual_search.xml" "$MODPATH/system/product/etc/permissions/"
 
 ui_print "- Setting permissions..."
 set_perm_recursive "$MODPATH" 0 0 0755 0644

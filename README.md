@@ -34,7 +34,8 @@ Flash it in the Magisk / KernelSU / APatch app and reboot. arm64, Android 11+.
    - Otherwise the module adds its own overlay (`KashiGoogleAssistOverlay`).
 
    Patching runs on the phone with APKEditor on the phone's own ART runtime, so no Java is bundled.
-3. **Default assistant**: on the first boot after flashing, Google is given the assistant role. You can still change it in Settings.
+3. **Circle to Search features**: adds `com.google.android.feature.CONTEXTUAL_SEARCH` and `CONTEXTUAL_SEARCH_LIVE_TRANSLATE` (`/product/etc/permissions/com.google.android.contextual_search.xml`).
+4. **Default assistant**: on the first boot after flashing, Google is given the assistant role. You can still change it in Settings.
 
 ## Where the Google app comes from
 
