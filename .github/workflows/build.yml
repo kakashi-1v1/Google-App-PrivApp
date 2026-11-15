@@ -84,6 +84,7 @@ jobs:
       - name: Build module zips
         if: env.MODULES == '1'
         run: |
+          git pull -q --rebase origin main || true     # latest.json may have been pushed by an earlier run
           [ -f latest.json ] || { echo "no Google app published yet"; exit 1; }
           j() { sed -n "s/^ *\"$1\": *\"\{0,1\}\([^\",]*\)\"\{0,1\},\{0,1\} *$/\1/p" latest.json | head -n1; }
           want=$(j apkSha256)
