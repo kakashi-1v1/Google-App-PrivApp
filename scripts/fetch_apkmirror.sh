@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Downloads the newest stable Google app (com.google.android.googlequicksearchbox), arm64 "ve" single APK (nodpi),
 # from APKMirror. Prints "<version>" and writes <out>. The signature is checked separately (scripts/verify_google.sh).
-# fetch_apkmirror.sh --version  -> only prints the newest stable version
+# fetch_apkmirror.sh --version  -> only prints the newest stable version (once its APK variant is up)
+# Exit 3: the newest release has no ve.arm64 nodpi APK yet (APKMirror adds variants over several hours).
 set -euo pipefail
 OUT=${1:?out apk}
 UA='Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0'
@@ -15,8 +16,6 @@ rel=$(printf '%s' "$page" | grep -oE 'class="fontBlack" href="/apk/google-inc/go
 [ -n "$rel" ] || { echo "no stable release found" >&2; exit 1; }
 ver=${rel%% *}; path=${rel#* }
 echo "release $ver: $path" >&2
-[ "$OUT" = --version ] && { echo "$ver"; exit 0; }
-
 relpage=$(get "$B$path")
 # variant row: "<ver>.ve.arm64" APK (not BUNDLE), nodpi
 var=$(printf '%s' "$relpage" | python3 -c '
@@ -28,8 +27,9 @@ for r in re.split(r"<div class=\"table-row headerFont\">", s)[1:]:
     if m and re.search(r"\.ve\.arm64 APK\b", t) and "nodpi" in t and "arm64-v8a" in t:
         print(m.group(1)); break
 ')
-[ -n "$var" ] || { echo "no ve.arm64 nodpi APK variant in $ver" >&2; exit 1; }
+[ -n "$var" ] || { echo "no ve.arm64 nodpi APK variant in $ver yet" >&2; exit 3; }
 echo "variant: $var" >&2
+[ "$OUT" = --version ] && { echo "$ver"; exit 0; }
 k=$(get "$B$var" | grep -oE 'href="/apk/[^"]*/download/\?key=[^"]*"' | head -n1 | sed 's/^href="//; s/"$//; s/&amp;/\&/g')
 [ -n "$k" ] || { echo "no download key" >&2; exit 1; }
 d=$(get "$B$k" | grep -oE 'href="/wp-content/themes/APKMirror/download\.php\?[^"]*"' | head -n1 | sed 's/^href="//; s/"$//; s/&amp;/\&/g')

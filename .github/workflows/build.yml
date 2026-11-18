@@ -39,7 +39,12 @@ jobs:
       - name: Newest Google app on APKMirror
         id: ver
         run: |
-          ver=$(bash scripts/fetch_apkmirror.sh --version)
+          rc=0; ver=$(bash scripts/fetch_apkmirror.sh --version) || rc=$?
+          if [ "$rc" = 3 ]; then
+            echo "::notice::Newest Google app is on APKMirror but its arm64 APK is not uploaded yet - the next run picks it up"
+            exit 0
+          fi
+          [ "$rc" = 0 ] || exit "$rc"
           echo "ver=$ver" >> "$GITHUB_OUTPUT"
           if gh release view "gapp-$ver" >/dev/null 2>&1 && [ "${{ inputs.force }}" != "true" ]; then
             echo "gapp-$ver already published"

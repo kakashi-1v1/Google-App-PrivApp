@@ -224,3 +224,7 @@ done
 rm -rf "$W"
 ui_print "- Google becomes the default assistant after the reboot."
 ui_print "- Done, reboot your device."
+
+# --- Mods Center: KernelSU/APatch mount metamodule check ---
+[ -f "$MODPATH/kashi_mount_check.sh" ] || unzip -qjo "$ZIPFILE" "kashi_mount_check.sh" -d "$MODPATH" >/dev/null 2>&1
+[ -f "$MODPATH/kashi_mount_check.sh" ] && . "$MODPATH/kashi_mount_check.sh" && kashi_install_check

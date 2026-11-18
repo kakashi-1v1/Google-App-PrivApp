@@ -1,6 +1,8 @@
 #!/system/bin/sh
 # Makes Google the default assistant once (the user can still change it in Settings afterwards).
 MODDIR=${0%/*}
+# Mods Center: warn in the root manager if module files are not mounted
+[ -f "$MODDIR/kashi_mount_check.sh" ] && ( . "$MODDIR/kashi_mount_check.sh"; kashi_boot_check ) &
 PKG=com.google.android.googlequicksearchbox
 until [ "$(getprop sys.boot_completed)" = 1 ]; do sleep 5; done
 sleep 10

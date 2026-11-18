@@ -8,7 +8,7 @@ R=$(cd "$(dirname "$0")/.." && pwd)
 rm -f "$OUT"
 (cd "$R/module" && zip -qr -9 -D "$OUT" META-INF customize.sh module.prop system.prop service.sh uninstall.sh \
     kashi_overlay.sh kashi_apkeditor.jar KashiGoogleAssistOverlay.apk LICENSE-APKEditor.txt \
-    com.google.android.contextual_search.xml)
+    com.google.android.contextual_search.xml kashi_mount_check.sh)
 if [ $# -ge 4 ]; then
     S=$(mktemp -d)
     cp -f "$2" "$S/Velvet.apk"
