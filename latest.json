@@ -1,10 +1,10 @@
 {
-  "version": "17.76.14",
-  "versionName": "17.76.14.ve.arm64",
-  "versionCode": 301838050,
-  "apk": "https://github.com/kakashi-1v1/Google-App-PrivApp/releases/download/gapp-17.76.14/Velvet.apk",
-  "apkSha256": "a4d40a27cd1b391f71745a63589c95ae1c7f3e9ceb5e0965cea5251b926cb563",
+  "version": "17.76.20",
+  "versionName": "17.76.20.ve.arm64",
+  "versionCode": 301838242,
+  "apk": "https://github.com/kakashi-1v1/Google-App-PrivApp/releases/download/gapp-17.76.20/Velvet.apk",
+  "apkSha256": "796d41819b7c3264229098ff677263908ee9b478fa44e82c48e686b7d62fed91",
   "apkSize": 308406310,
-  "privapp": "https://github.com/kakashi-1v1/Google-App-PrivApp/releases/download/gapp-17.76.14/privapp-permissions.xml",
+  "privapp": "https://github.com/kakashi-1v1/Google-App-PrivApp/releases/download/gapp-17.76.20/privapp-permissions.xml",
   "privappSha256": "cc67cb2aeb9a6261673d89bf883b1f9dbb3ec560c69adbd8e5536321bdafedf0"
 }
